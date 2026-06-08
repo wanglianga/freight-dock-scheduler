@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Input, Select, DatePicker, Space, Tag, message } from 'antd';
+import { Table, Button, Input, DatePicker, Space, Tag, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { SearchOutlined, ReloadOutlined } from '@ant-design/icons';
 import { releasesApi, ReleaseRecord } from '../services/api';

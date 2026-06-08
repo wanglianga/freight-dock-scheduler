@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Button, Modal, Form, InputNumber, message, Space, Tag, Progress, Input, Dropdown } from 'antd';
-import type { ColumnsType, MenuProps } from 'antd/es/table';
+import type { ColumnsType } from 'antd/es/table';
+import type { MenuProps } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import { appointmentsApi, releasesApi, Appointment, AppointmentStatus } from '../services/api';
 import dayjs from 'dayjs';

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Button, Modal, Form, Input, Select, message, Space, Tag, Tooltip } from 'antd';
+import { Table, Button, Modal, Form, Input, Select, InputNumber, message, Space, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { PlusOutlined, CheckOutlined } from '@ant-design/icons';
 import { appointmentsApi, carriersApi, Appointment, Carrier, AppointmentStatus } from '../services/api';
@@ -156,7 +156,7 @@ const PendingZone: React.FC = () => {
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         onOk={() => form.submit()}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={form} layout="vertical" onFinish={handleCreate}>
           <Form.Item label="承运商" name="carrierId" rules={[{ required: true, message: '请选择承运商' }]}>
