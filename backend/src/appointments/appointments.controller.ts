@@ -1,7 +1,13 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { AppointmentsService } from './appointments.service';
 import { Appointment, AppointmentStatus } from './appointment.entity';
-import { CreateAppointmentDto, UpdateAppointmentDto, HandlePackagesDto } from './appointment.dto';
+import {
+  CreateAppointmentDto,
+  UpdateAppointmentDto,
+  HandlePackagesDto,
+  SubmitActualPackagesDto,
+  PayDetentionDto,
+} from './appointment.dto';
 
 @Controller('api/appointments')
 export class AppointmentsController {
@@ -56,6 +62,34 @@ export class AppointmentsController {
     @Body() dto: HandlePackagesDto,
   ): Promise<Appointment> {
     return this.appointmentsService.handlePackages(id, dto);
+  }
+
+  @Post(':id/submit-actual-packages')
+  submitActualPackages(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: SubmitActualPackagesDto,
+  ): Promise<{ appointment: Appointment; needsReview: boolean; diffPercent: number }> {
+    return this.appointmentsService.submitActualPackages(id, dto);
+  }
+
+  @Get(':id/compute-detention-fee')
+  computeDetentionFee(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<{
+    appointment: Appointment;
+    fee: number;
+    overtimeMinutes: number;
+    actualMinutes: number;
+  }> {
+    return this.appointmentsService.computeDetentionFee(id);
+  }
+
+  @Post(':id/pay-detention')
+  payDetention(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: PayDetentionDto,
+  ): Promise<Appointment> {
+    return this.appointmentsService.payDetention(id, dto);
   }
 
   @Delete(':id')

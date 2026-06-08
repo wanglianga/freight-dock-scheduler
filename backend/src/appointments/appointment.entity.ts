@@ -80,6 +80,24 @@ export class Appointment {
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   detentionFee: number;
 
+  @Column({ type: 'boolean', default: false })
+  detentionPaid: boolean;
+
+  @Column({ type: 'int', default: 60 })
+  standardDurationMinutes: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 1 })
+  detentionRatePerMinute: number;
+
+  @Column({ type: 'int', default: 0 })
+  actualPackages: number;
+
+  @Column({ type: 'boolean', default: false })
+  needsReview: boolean;
+
+  @Column({ type: 'text', nullable: true })
+  reviewNote: string;
+
   @Column({ type: 'text', nullable: true })
   remarks: string;
 

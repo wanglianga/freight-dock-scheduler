@@ -58,18 +58,49 @@ const ResultZone: React.FC = () => {
     { title: '预约号', dataIndex: ['appointment', 'appointmentNo'], width: 130, render: (_, r) => r.appointment?.appointmentNo || '-' },
     { title: '车牌号', dataIndex: 'plateNumber', width: 110 },
     { title: '承运商', dataIndex: 'carrierName', width: 180 },
-    { title: '总件数', dataIndex: 'totalPackages', width: 80 },
-    { title: '已处理', dataIndex: 'handledPackages', width: 80 },
+    { title: '预报件数', dataIndex: 'totalPackages', width: 90 },
+    { title: '装卸进度', dataIndex: 'handledPackages', width: 90 },
+    {
+      title: '实际件数',
+      dataIndex: 'actualPackages',
+      width: 140,
+      render: (v: number, r) => {
+        const total = r.totalPackages || 0;
+        const actual = v || 0;
+        const diff = total > 0 ? Math.abs(actual - total) / total : 0;
+        return (
+          <Space>
+            <b>{actual}</b>
+            {r.needsReview ? (
+              <Tag color="orange">
+                ⚠️ 差异 {(diff * 100).toFixed(1)}%，需复核
+              </Tag>
+            ) : diff > 0 ? (
+              <Tag color="green">差异 {(diff * 100).toFixed(1)}%</Tag>
+            ) : null}
+          </Space>
+        );
+      },
+    },
     {
       title: '滞留罚金',
       dataIndex: 'detentionFee',
-      width: 110,
-      render: (v: number) =>
-        Number(v) > 0 ? (
-          <Tag color="red" className="detention-tag">¥ {Number(v).toFixed(2)}</Tag>
-        ) : (
-          <span style={{ color: '#999' }}>无</span>
-        ),
+      width: 180,
+      render: (v: number, r) => (
+        <Space>
+          {Number(v) > 0 ? (
+            <Tag color="red" className="detention-tag">¥ {Number(v).toFixed(2)}</Tag>
+          ) : (
+            <span style={{ color: '#999' }}>无</span>
+          )}
+          {Number(v) > 0 &&
+            (r.detentionPaid ? (
+              <Tag color="green">✓ 已缴</Tag>
+            ) : (
+              <Tag color="orange">⚠️ 未缴</Tag>
+            ))}
+        </Space>
+      ),
     },
     {
       title: '放行时间',
@@ -125,7 +156,7 @@ const ResultZone: React.FC = () => {
         dataSource={data}
         columns={columns}
         pagination={{ pageSize: 5, showSizeChanger: true, showTotal: (t) => `共 ${t} 条放行记录` }}
-        scroll={{ x: 1200 }}
+        scroll={{ x: 1500 }}
       />
     </div>
   );

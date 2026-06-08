@@ -28,6 +28,7 @@ export interface Appointment {
   operationType: OperationType;
   totalPackages: number;
   handledPackages: number;
+  actualPackages: number;
   scheduledTime?: string;
   arrivedAt?: string;
   startedAt?: string;
@@ -35,6 +36,11 @@ export interface Appointment {
   status: AppointmentStatus;
   dockNumber?: string;
   detentionFee: number;
+  detentionPaid: boolean;
+  standardDurationMinutes: number;
+  detentionRatePerMinute: number;
+  needsReview: boolean;
+  reviewNote?: string;
   remarks?: string;
   boundaryCheckPassed: boolean;
   boundaryCheckNote?: string;
@@ -51,11 +57,27 @@ export interface ReleaseRecord {
   carrierName: string;
   totalPackages: number;
   handledPackages: number;
+  actualPackages: number;
   detentionFee: number;
+  detentionPaid: boolean;
+  needsReview: boolean;
   releasedAt: string;
   releasedBy?: string;
   remarks?: string;
   createdAt: string;
+}
+
+export interface ComputeDetentionResult {
+  appointment: Appointment;
+  fee: number;
+  overtimeMinutes: number;
+  actualMinutes: number;
+}
+
+export interface SubmitActualPackagesResult {
+  appointment: Appointment;
+  needsReview: boolean;
+  diffPercent: number;
 }
 
 export const carriersApi = {
@@ -74,6 +96,15 @@ export const appointmentsApi = {
   queueCheck: (id: number) => api.post<{ passed: boolean; note: string }>(`/appointments/${id}/queue-check`).then((r) => r.data),
   handlePackages: (id: number, packages: number) =>
     api.post<Appointment>(`/appointments/${id}/handle-packages`, { packages }).then((r) => r.data),
+  submitActualPackages: (id: number, actualPackages: number, reviewNote?: string) =>
+    api.post<SubmitActualPackagesResult>(`/appointments/${id}/submit-actual-packages`, {
+      actualPackages,
+      reviewNote,
+    }).then((r) => r.data),
+  computeDetentionFee: (id: number) =>
+    api.get<ComputeDetentionResult>(`/appointments/${id}/compute-detention-fee`).then((r) => r.data),
+  payDetention: (id: number, paid: boolean = true, detentionFee?: number) =>
+    api.post<Appointment>(`/appointments/${id}/pay-detention`, { paid, detentionFee }).then((r) => r.data),
 };
 
 export const releasesApi = {

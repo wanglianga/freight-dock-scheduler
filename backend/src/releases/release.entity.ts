@@ -28,8 +28,17 @@ export class ReleaseRecord {
   @Column({ type: 'int', default: 0 })
   handledPackages: number;
 
+  @Column({ type: 'int', default: 0 })
+  actualPackages: number;
+
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
   detentionFee: number;
+
+  @Column({ type: 'boolean', default: false })
+  detentionPaid: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  needsReview: boolean;
 
   @Column({ type: 'timestamp' })
   releasedAt: Date;

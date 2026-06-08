@@ -51,6 +51,11 @@ export class ReleasesService {
       throw new BadRequestException('只有装卸完成的预约才能放行');
     }
 
+    const finalFee = dto.detentionFee ?? appointment.detentionFee ?? 0;
+    if (Number(finalFee) > 0 && !appointment.detentionPaid) {
+      throw new BadRequestException('滞留罚金未缴纳，不能放行。请先标记"罚金已缴"后再执行放行。');
+    }
+
     const releaseNo = `FX${Date.now().toString().slice(-8)}`;
     const now = new Date();
 
@@ -61,13 +66,17 @@ export class ReleasesService {
       carrierName: appointment.carrier?.name || '',
       totalPackages: appointment.totalPackages,
       handledPackages: appointment.handledPackages,
-      detentionFee: dto.detentionFee ?? appointment.detentionFee ?? 0,
+      actualPackages: appointment.actualPackages || appointment.handledPackages || appointment.totalPackages,
+      detentionFee: finalFee,
+      detentionPaid: appointment.detentionPaid,
+      needsReview: appointment.needsReview,
       releasedAt: now,
       releasedBy: dto.releasedBy || '系统管理员',
       remarks: dto.remarks,
     });
 
     appointment.status = AppointmentStatus.RELEASED;
+    appointment.detentionFee = finalFee;
     await this.appointmentRepository.save(appointment);
 
     return this.releaseRepository.save(record);

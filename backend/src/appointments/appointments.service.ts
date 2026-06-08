@@ -2,7 +2,13 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Appointment, AppointmentStatus } from './appointment.entity';
-import { CreateAppointmentDto, UpdateAppointmentDto, HandlePackagesDto } from './appointment.dto';
+import {
+  CreateAppointmentDto,
+  UpdateAppointmentDto,
+  HandlePackagesDto,
+  SubmitActualPackagesDto,
+  PayDetentionDto,
+} from './appointment.dto';
 
 @Injectable()
 export class AppointmentsService {
@@ -68,6 +74,17 @@ export class AppointmentsService {
     return this.appointmentRepository.save(appointment);
   }
 
+  private calculateDetentionFee(appointment: Appointment, completedAt: Date): number {
+    if (!appointment.startedAt) return 0;
+    const standardMs = (appointment.standardDurationMinutes || 60) * 60 * 1000;
+    const rate = Number(appointment.detentionRatePerMinute || 1);
+    const actualMs = completedAt.getTime() - new Date(appointment.startedAt).getTime();
+    const overtimeMs = actualMs - standardMs;
+    if (overtimeMs <= 0) return 0;
+    const overtimeMinutes = Math.ceil(overtimeMs / (60 * 1000));
+    return Number((overtimeMinutes * rate).toFixed(2));
+  }
+
   async update(id: number, dto: UpdateAppointmentDto): Promise<Appointment> {
     const appointment = await this.findOne(id);
 
@@ -87,8 +104,12 @@ export class AppointmentsService {
           break;
         case AppointmentStatus.COMPLETED:
           appointment.completedAt = now;
+          appointment.detentionFee = this.calculateDetentionFee(appointment, now);
           if (appointment.handledPackages === 0 && appointment.totalPackages > 0) {
             appointment.handledPackages = appointment.totalPackages;
+          }
+          if (appointment.actualPackages === 0 && appointment.totalPackages > 0) {
+            appointment.actualPackages = appointment.totalPackages;
           }
           break;
       }
@@ -137,8 +158,82 @@ export class AppointmentsService {
     appointment.handledPackages = newHandled;
     if (newHandled >= appointment.totalPackages) {
       appointment.status = AppointmentStatus.COMPLETED;
-      appointment.completedAt = new Date();
+      const now = new Date();
+      appointment.completedAt = now;
+      appointment.detentionFee = this.calculateDetentionFee(appointment, now);
+      if (appointment.actualPackages === 0 && appointment.totalPackages > 0) {
+        appointment.actualPackages = appointment.totalPackages;
+      }
     }
+    return this.appointmentRepository.save(appointment);
+  }
+
+  async submitActualPackages(
+    id: number,
+    dto: SubmitActualPackagesDto,
+  ): Promise<{ appointment: Appointment; needsReview: boolean; diffPercent: number }> {
+    const appointment = await this.findOne(id);
+    if (
+      appointment.status !== AppointmentStatus.LOADING &&
+      appointment.status !== AppointmentStatus.COMPLETED &&
+      appointment.status !== AppointmentStatus.ARRIVED
+    ) {
+      throw new BadRequestException('当前状态不能录入实际装卸件数');
+    }
+
+    const total = appointment.totalPackages || 0;
+    const actual = dto.actualPackages;
+    let diffPercent = 0;
+    if (total > 0) {
+      diffPercent = Math.abs(actual - total) / total;
+    }
+    const needsReview = diffPercent > 0.1;
+
+    appointment.actualPackages = actual;
+    appointment.needsReview = needsReview;
+    if (dto.reviewNote) {
+      appointment.reviewNote = dto.reviewNote;
+    }
+
+    const saved = await this.appointmentRepository.save(appointment);
+    return {
+      appointment: saved,
+      needsReview,
+      diffPercent: Number((diffPercent * 100).toFixed(2)),
+    };
+  }
+
+  async computeDetentionFee(id: number): Promise<{
+    appointment: Appointment;
+    fee: number;
+    overtimeMinutes: number;
+    actualMinutes: number;
+  }> {
+    const appointment = await this.findOne(id);
+    if (!appointment.startedAt) {
+      throw new BadRequestException('装卸尚未开始，无法计算滞留罚金');
+    }
+    const now = appointment.completedAt ? new Date(appointment.completedAt) : new Date();
+    const fee = this.calculateDetentionFee(appointment, now);
+    const actualMinutes = Math.ceil(
+      (now.getTime() - new Date(appointment.startedAt).getTime()) / (60 * 1000),
+    );
+    const standard = appointment.standardDurationMinutes || 60;
+    const overtimeMinutes = Math.max(0, actualMinutes - standard);
+    return {
+      appointment,
+      fee,
+      overtimeMinutes,
+      actualMinutes,
+    };
+  }
+
+  async payDetention(id: number, dto: PayDetentionDto): Promise<Appointment> {
+    const appointment = await this.findOne(id);
+    if (dto.detentionFee !== undefined) {
+      appointment.detentionFee = dto.detentionFee;
+    }
+    appointment.detentionPaid = dto.paid !== undefined ? dto.paid : true;
     return this.appointmentRepository.save(appointment);
   }
 

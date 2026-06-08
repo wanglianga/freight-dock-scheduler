@@ -60,6 +60,30 @@ export class UpdateAppointmentDto {
   @IsOptional()
   detentionFee?: number;
 
+  @IsBoolean()
+  @IsOptional()
+  detentionPaid?: boolean;
+
+  @IsInt()
+  @IsOptional()
+  standardDurationMinutes?: number;
+
+  @IsNumber()
+  @IsOptional()
+  detentionRatePerMinute?: number;
+
+  @IsInt()
+  @IsOptional()
+  actualPackages?: number;
+
+  @IsBoolean()
+  @IsOptional()
+  needsReview?: boolean;
+
+  @IsString()
+  @IsOptional()
+  reviewNote?: string;
+
   @IsString()
   @IsOptional()
   dockNumber?: string;
@@ -73,4 +97,24 @@ export class HandlePackagesDto {
   @IsInt()
   @IsNotEmpty()
   packages: number;
+}
+
+export class SubmitActualPackagesDto {
+  @IsInt()
+  @IsNotEmpty()
+  actualPackages: number;
+
+  @IsString()
+  @IsOptional()
+  reviewNote?: string;
+}
+
+export class PayDetentionDto {
+  @IsBoolean()
+  @IsOptional()
+  paid?: boolean;
+
+  @IsNumber()
+  @IsOptional()
+  detentionFee?: number;
 }
