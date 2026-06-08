@@ -1,4 +1,5 @@
-import { IsInt, IsNotEmpty, IsOptional, IsString, IsNumber } from 'class-validator';
+import { IsInt, IsNotEmpty, IsOptional, IsString, IsNumber, IsEnum } from 'class-validator';
+import { AcceptanceConclusion } from './release.entity';
 
 export class CreateReleaseDto {
   @IsInt()
@@ -29,9 +30,25 @@ export class ReleaseFilterDto {
 
   @IsOptional()
   @IsString()
+  dockNumber?: string;
+
+  @IsOptional()
+  @IsString()
   startDate?: string;
 
   @IsOptional()
   @IsString()
   endDate?: string;
+
+  @IsOptional()
+  @IsNumber()
+  minDetentionFee?: number;
+
+  @IsOptional()
+  @IsNumber()
+  maxDetentionFee?: number;
+
+  @IsOptional()
+  @IsEnum(AcceptanceConclusion)
+  acceptanceConclusion?: AcceptanceConclusion;
 }

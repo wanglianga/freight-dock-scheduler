@@ -48,6 +48,8 @@ export interface Appointment {
   updatedAt: string;
 }
 
+export type AcceptanceConclusion = 'passed' | 'needs_review' | 'rejected';
+
 export interface ReleaseRecord {
   id: number;
   releaseNo: string;
@@ -55,16 +57,33 @@ export interface ReleaseRecord {
   appointment?: Appointment;
   plateNumber: string;
   carrierName: string;
+  dockNumber?: string;
+  arrivedAt?: string;
+  startedAt?: string;
+  completedAt?: string;
   totalPackages: number;
   handledPackages: number;
   actualPackages: number;
   detentionFee: number;
   detentionPaid: boolean;
+  acceptanceConclusion: AcceptanceConclusion;
   needsReview: boolean;
+  reviewNote?: string;
   releasedAt: string;
   releasedBy?: string;
   remarks?: string;
   createdAt: string;
+}
+
+export interface ReleaseFilterParams {
+  plateNumber?: string;
+  carrierName?: string;
+  dockNumber?: string;
+  startDate?: string;
+  endDate?: string;
+  minDetentionFee?: number;
+  maxDetentionFee?: number;
+  acceptanceConclusion?: AcceptanceConclusion;
 }
 
 export interface ComputeDetentionResult {
@@ -108,8 +127,12 @@ export const appointmentsApi = {
 };
 
 export const releasesApi = {
-  list: (params?: any) => api.get<ReleaseRecord[]>('/releases', { params }).then((r) => r.data),
+  list: (params?: ReleaseFilterParams) =>
+    api.get<ReleaseRecord[]>('/releases', { params }).then((r) => r.data),
+  detail: (id: number) => api.get<ReleaseRecord>(`/releases/${id}`).then((r) => r.data),
   create: (data: any) => api.post<ReleaseRecord>('/releases', data).then((r) => r.data),
+  export: (params?: ReleaseFilterParams) =>
+    api.get('/releases/export', { params, responseType: 'blob' }).then((r) => r.data),
 };
 
 export default api;

@@ -1,6 +1,12 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, OneToOne, JoinColumn } from 'typeorm';
 import { Appointment } from '../appointments/appointment.entity';
 
+export enum AcceptanceConclusion {
+  PASSED = 'passed',
+  NEEDS_REVIEW = 'needs_review',
+  REJECTED = 'rejected',
+}
+
 @Entity('release_records')
 export class ReleaseRecord {
   @PrimaryGeneratedColumn()
@@ -22,6 +28,18 @@ export class ReleaseRecord {
   @Column()
   carrierName: string;
 
+  @Column({ nullable: true })
+  dockNumber: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  arrivedAt: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  startedAt: Date;
+
+  @Column({ type: 'timestamp', nullable: true })
+  completedAt: Date;
+
   @Column({ type: 'int', default: 0 })
   totalPackages: number;
 
@@ -37,8 +55,18 @@ export class ReleaseRecord {
   @Column({ type: 'boolean', default: false })
   detentionPaid: boolean;
 
+  @Column({
+    type: 'enum',
+    enum: AcceptanceConclusion,
+    default: AcceptanceConclusion.PASSED,
+  })
+  acceptanceConclusion: AcceptanceConclusion;
+
   @Column({ type: 'boolean', default: false })
   needsReview: boolean;
+
+  @Column({ type: 'text', nullable: true })
+  reviewNote: string;
 
   @Column({ type: 'timestamp' })
   releasedAt: Date;
